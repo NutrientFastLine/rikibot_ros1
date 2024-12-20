@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rikibot_autorace_control</name>
+  <version>1.2.0</version>
+  <description> 
+    RIKIROBOT AutoRace ROS package that controls rikirobot Auto
+  </description>
+  <license>Apache 2.0</license>
+  <author email="304050118@qq.com">kevin</author>
+  <author>kevin</author>
+  <maintainer email="304050118@qq.com">kevin</maintainer>
+  <url type="website">http://www.rikirobot.com</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>python-enum34</exec_depend>
+</package>
+

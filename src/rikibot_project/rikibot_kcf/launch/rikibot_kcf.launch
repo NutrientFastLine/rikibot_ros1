@@ -1,0 +1,25 @@
+<launch>
+
+<!-- Detection node -->
+    <arg name="astra"   default="$(env USB_CAMERA)"  doc="Set astra(astra or usb camera) is true , set d435 is false"/>
+    <arg     if="$(arg astra)" name="input_image"      default="/camera/rgb/image_raw"/>
+    <arg unless="$(arg astra)" name="input_image"      default="/camera/color/image_raw"/>
+    <arg     if="$(arg astra)" name="input_depth"      default="/camera/depth/image"/>
+    <arg unless="$(arg astra)" name="input_depth"      default="/camera/depth/image_rect_raw"/>
+    <group if="$(arg astra)">
+       <include file="$(find rikibot)/launch/camera.launch" />
+       <include file="$(find astra_launch)/launch/astra.launch"/>
+    </group>
+
+    <group unless="$(arg astra)">
+      <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+    </group>
+
+
+    <node pkg="rikibot_kcf" name="rikibot_kcf" type="rikibot_kcf_node" cwd="node" output="screen">
+	<param name="image_topic" value="$(arg input_image)" />
+	<param name="depth_topic" value="$(arg input_depth)" />
+        <param name="camera_model" value="$(arg astra)" />
+    </node>
+
+</launch>

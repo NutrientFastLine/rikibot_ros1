@@ -1,0 +1,6 @@
+<launch>
+  
+  <node pkg="rikibot" type="rikibot_connect_bluetooth.py" name="rikibot_connect_bluetooth" output="screen" >
+  </node>
+ 
+</launch>

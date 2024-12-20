@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rikibot_autorace</name>
+  <version>1.2.0</version>
+  <description>
+    AutoRace ROS packages for AutoRace with RIKIBOT (meta package)
+  </description>
+  <license>Apache 2.0</license>
+  <author email="304050118@qq.com">kevin</author>
+  <maintainer email="304050118@qq.com">kevin</maintainer>
+  <author>kevin</author>
+  <url type="website">http://www.rikirobot.com</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>rikibot_autorace_camera</exec_depend>
+  <exec_depend>rikibot_autorace_control</exec_depend>
+  <exec_depend>rikibot_autorace_core</exec_depend>
+  <exec_depend>rikibot_autorace_detect</exec_depend>
+  <export><metapackage/></export>
+</package>

@@ -1,0 +1,145 @@
+#!/usr/bin/env python
+import sys
+import rospy
+import os
+#sys.path.append('/opt/ros/{}/lib/python2.7/dist-packages'.format(os.getenv('ROS_DISTRO')))  # NOQA
+import cv2
+import numpy as np
+from cv_bridge import CvBridge, CvBridgeError
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
+
+
+def callback(x):
+    pass
+
+class ImageTransform():
+    def __init__(self):
+        self.sub_image_type = "compressed" # you can choose image type "compressed", "raw"
+        self.pub_image_type = "raw" # you can choose image type "compressed", "raw"
+
+
+        self.calibration = rospy.get_param("~calibration", False)
+        self.top_x = rospy.get_param("/detect_lane/detect/lane/top_x", 75)
+        self.top_y = rospy.get_param("/detect_lane/detect/lane/top_y", 35)
+        self.bottom_x = rospy.get_param("/detect_lane/detect/lane/bottom_x", 165)
+        self.bottom_y = rospy.get_param("/detect_lane/detect/lane/bottom_y", 120)
+        self.binary_threshold = rospy.get_param("/detect_lane/detect/lane/binary_threshold", 130)
+
+        if self.calibration is True:
+            cv2.namedWindow('cv_image')
+            cv2.createTrackbar('top_x','cv_image',self.top_x, 240,callback)
+            cv2.createTrackbar('top_y','cv_image',self.top_y, 240,callback)
+            cv2.createTrackbar('bottom_x','cv_image',self.bottom_x, 320,callback)
+            cv2.createTrackbar('bottom_y','cv_image',self.bottom_y, 320,callback)
+            cv2.createTrackbar('binary_threshold', 'cv_image', self.binary_threshold, 255, callback)
+
+
+        if self.sub_image_type == "compressed":
+            self.sub_image_original = rospy.Subscriber('camera/image_rect_color/compressed', CompressedImage, self.callback, queue_size=1)
+        else:
+            self.sub_image_original = rospy.Subscriber('/camera/image_rect_color', Image, self.callback, queue_size=1)
+
+
+        if self.pub_image_type == "compressed":
+            self.pub_lane_image = rospy.Publisher('/image_lane/compressed', CompressedImage, queue_size=1)
+        else:
+            self.pub_lane_image = rospy.Publisher('/image_lane', Image, queue_size=1)
+
+        self.bridge = CvBridge()
+
+        self.counter = 1
+
+    def callback(self, image_msg):
+        # drop the frame to 1/5 (6fps) because of the processing speed. This is up to your computer's operating power.
+        if self.counter % 3 != 0:
+            self.counter += 1
+            return
+        else:
+            self.counter = 1 
+        
+        mat_translation=np.float32([[1,0,-50],[0,1,0]])
+
+        if self.sub_image_type == "compressed":
+            #converting compressed image to opencv image
+            np_arr = np.fromstring(image_msg.data, np.uint8)
+            #cv_image = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
+            cv_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+            img_info=cv_image.shape
+            cv_image = cv2.warpAffine(cv_image,mat_translation,(img_info[1],img_info[0]))
+        elif self.sub_image_type == "raw":
+            #cv_image = self._cv_bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
+            cv_image = self._cv_bridge.imgmsg_to_cv2(image_msg, "bgr8")
+            img_info=cv_image.shape
+            cv_image = cv2.warpAffine(cv_image,mat_translation,(img_info[1],img_info[0]))
+
+
+
+        # adding Gaussian blur
+        cv_image = cv2.GaussianBlur(cv_image,(5,5),0)
+
+        # copy original image to use in homography process
+        cv_origin = np.copy(cv_image)
+
+        if self.calibration is True:
+            # creating trackbar
+
+            # getting homography variables from trackbar
+            self.top_x = cv2.getTrackbarPos('top_x', 'cv_image')
+            self.top_y = cv2.getTrackbarPos('top_y', 'cv_image')
+            self.bottom_x = cv2.getTrackbarPos('bottom_x', 'cv_image')
+            self.bottom_y = cv2.getTrackbarPos('bottom_y', 'cv_image')
+            self.binary_threshold = cv2.getTrackbarPos('binary_threshold', 'cv_image')
+
+        if self.calibration is True:
+            # draw lines to help setting homography variables
+            cv_image = cv2.line(cv_image, (320-self.top_x, 340-self.top_y), (320+self.top_x, 340-self.top_y), (0, 0, 255), 1)
+            cv_image = cv2.line(cv_image, (320-self.bottom_x, 240+self.bottom_y), (320+self.bottom_x, 240+self.bottom_y), (0, 0, 255), 1)
+            cv_image = cv2.line(cv_image, (320+self.bottom_x, 240+self.bottom_y), (320+self.top_x, 340-self.top_y), (0, 0, 255), 1)
+            cv_image = cv2.line(cv_image, (320-self.bottom_x, 240+self.bottom_y), (320-self.top_x, 340-self.top_y), (0, 0, 255), 1)
+
+        ### homography transform process ###
+        # selecting 4 points from the original image
+        pts_src = np.array([[320-self.top_x, 340-self.top_y], [320+self.top_x, 340-self.top_y], [320+self.bottom_x, 240+self.bottom_y], [320-self.bottom_x, 240+self.bottom_y]])
+        # selecting 4 points from image that will be transformed
+        pts_dst = np.array([[200, 0], [800, 0], [800, 600], [200, 600]])
+        # finding homography matrix
+        h, status = cv2.findHomography(pts_src, pts_dst)
+        # homography process
+        cv_Homography = cv2.warpPerspective(cv_origin, h, (1000, 600))
+        # fill the empty space with black triangles
+        triangle1 = np.array([ [0,599], [0,340], [200,599] ], np.int32)
+        triangle2 = np.array([ [999,599], [999,340], [799,599] ], np.int32)
+        black = (0,0,0)
+        white = (255,255,255)
+        cv_Homography = cv2.fillPoly(cv_Homography, [triangle1, triangle2], black)
+
+        # converting to binary image
+        cv_Homography = cv2.cvtColor(cv_Homography, cv2.COLOR_RGB2GRAY)
+        ret, cv_Homography = cv2.threshold(cv_Homography, self.binary_threshold, 255, cv2.THRESH_BINARY)
+
+        # showing calibrated iamge and Bird's eye view image
+        if self.calibration is True:
+            cv2.imshow('cv_image', cv_image), cv2.waitKey(1)
+            cv2.imshow('Homography', cv_Homography), cv2.waitKey(1)
+
+        # publishing calbrated and Bird's eye view as compressed image
+        if self.pub_image_type == "compressed":
+            msg_homography = CompressedImage()
+            msg_homography.header.stamp = rospy.Time.now()
+            msg_homography.format = "jpeg"
+            msg_homography.data = np.array(cv2.imencode('.jpg', cv_Homography)[1]).tostring()
+            self.pub_lane_image.publish(msg_homography)
+
+        # publishing calbrated and Bird's eye view as raw image
+        else :
+            self.pub_lane_image.publish(self.bridge.cv2_to_imgmsg(cv_Homography, "mono8"))
+
+    def main(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('detect_lane')
+    os.system("rostopic pub -1 servo riki_msgs/Servo -- '70' '93'")
+    node = ImageTransform()
+    node.main()

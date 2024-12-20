@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rikibot_controller" name="rikibot_controller_python" type="rikibot_train_controller.py" output="screen"/>
+</launch>

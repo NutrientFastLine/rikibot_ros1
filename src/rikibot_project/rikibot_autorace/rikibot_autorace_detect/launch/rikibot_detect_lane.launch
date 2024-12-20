@@ -1,0 +1,7 @@
+<launch>
+  <!-- lane detection -->
+  <node pkg="rikibot_autorace_detect" type="detect_lane" name="detect_lane" output="screen">
+    <rosparam command="load" file="$(find rikibot_autorace_detect)/param/lane/lane.yaml" />
+	<param name="calibration" value="False" type="bool" />
+  </node>
+</launch>

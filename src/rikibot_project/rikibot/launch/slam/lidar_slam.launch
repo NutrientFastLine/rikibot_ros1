@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find rikibot)/launch/lidar/$(env RIKILIDAR).launch" />
+  <include file="$(find rikibot)/param/navigation/slam_gmapping.xml" />
+  <include file="$(find rikibot)/param/navigation/move_base.xml" />
+</launch>

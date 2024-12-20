@@ -1,0 +1,9 @@
+<launch>
+   <include file="$(find rikibot_object_trtdetect)/launch/rikibot_object_trtdetect.launch" />
+
+  <node name="rikibot_object_grasp" pkg="rikibot_object_grasp" type="rikibot_object_grasp.py" output="screen" >
+      <param name="speed" value="0.1" type="double" />
+      <param name="distance" value="13" type="double" />
+      <param name="back_time" value="3" type="double" />
+  </node>
+</launch>

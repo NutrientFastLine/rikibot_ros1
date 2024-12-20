@@ -1,0 +1,7 @@
+detect:
+  lane:
+    top_x: 195
+    top_y: 117
+    bottom_x: 270
+    bottom_y: 138
+    binary_threshold: 195

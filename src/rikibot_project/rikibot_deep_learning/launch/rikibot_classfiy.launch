@@ -1,0 +1,14 @@
+<launch>
+    <arg name="astra"    doc="Set astra(astra or usb camera) is true , set d435 is false"/>
+    <arg     if="$(env USB_CAMERA)" name="input_image"        default="/camera/rgb/image_raw"/>
+    <arg unless="$(env USB_CAMERA)" name="input_image"      default="/camera/color/image_raw"/>
+
+    <!-- set parameters -->
+    <rosparam  file="$(find rikibot_deep_learning)/config/paths.yaml" command="load"/>
+
+    <node name="rikibot_classfiy_node"  pkg="rikibot_deep_learning" type="rikibot_classfiy"  output="screen">
+          <param name="image_topic" value="$(arg input_image)" />
+          <remap from="~imin" to="/image_raw" />
+    </node>
+
+</launch>

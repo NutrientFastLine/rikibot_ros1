@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find rikibot_autorace_camera)/launch/camera.launch" />
+    <include file="$(find rikibot_autorace_camera)/launch/camera_calibration.launch" />
+</launch>

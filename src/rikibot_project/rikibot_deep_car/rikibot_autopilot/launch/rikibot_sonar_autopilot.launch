@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="rikibot_autopilot" name="rikibot_sonar_autopilot" type="rikibot_sonar_autopilot.py" output="screen">
+      <param name='speed' value='0.2' type='double' />
+      <param name='distance' value='0.5' type='double' />
+  </node>
+</launch>

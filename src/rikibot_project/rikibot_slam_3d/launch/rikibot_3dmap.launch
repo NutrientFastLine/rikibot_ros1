@@ -1,0 +1,10 @@
+<launch>
+  <include if="$(env USB_CAMERA)" file="$(find rikibot_slam_3d)/launch/rikibot_astra_bringup.launch"/>
+  <include if="$(env USB_CAMERA)" file="$(find rikibot_slam_3d)/launch/rtabmap_gmapping.launch"/>
+
+  <include unless="$(env USB_CAMERA)" file="$(find rikibot_slam_3d)/launch/d435/rikibot_d435_bringup.launch"/>
+  <include unless="$(env USB_CAMERA)" file="$(find rikibot_slam_3d)/launch/d435/rtabmap_d435_gmapping.launch"/>
+
+    <arg name="localization"    value="false" doc="Localization mode for navigation"/>
+  <!--include file="$(find rikibot_deep_learning)/launch/rikibot_detect.launch"/-->
+</launch>

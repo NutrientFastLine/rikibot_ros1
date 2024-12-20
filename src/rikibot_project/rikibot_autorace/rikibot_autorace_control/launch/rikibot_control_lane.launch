@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rikibot_autorace_control" type="control_lane" name="control_lane" output="screen" >
+       <param name="ctrl_theta" value="0.032" type="double" />
+  </node>
+</launch>

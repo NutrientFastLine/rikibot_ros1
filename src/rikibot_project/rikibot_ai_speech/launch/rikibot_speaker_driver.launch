@@ -1,0 +1,3 @@
+<launch>
+  <node name="rikibot_speaker_node" pkg="rikibot_ai_speech" type="rikibot_speaker_node.py" output="screen"/>
+</launch>

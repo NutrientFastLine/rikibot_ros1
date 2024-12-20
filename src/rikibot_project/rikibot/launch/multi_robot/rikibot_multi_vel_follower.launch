@@ -1,0 +1,7 @@
+<launch>
+     <node name="multi_vel_robot_follow" pkg="rikibot" type="rikibot_speed_listener.py" output="screen">
+	<param name="listen_robot" value="riki1" type="string" />
+	<param name="follow_robot" value="riki2" type="string" />
+     </node>
+</launch>
+

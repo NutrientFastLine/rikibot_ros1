@@ -1,0 +1,14 @@
+<launch>
+     <node name="robot1_tf_broadcaster" pkg="rikibot" type="rikibot_tf_broadcaster.py" respawn="false" >
+       <param name="robot" type="string" value="riki1" />
+     </node>
+     <node name="robot2_tf_broadcaster" pkg="rikibot" type="rikibot_tf_broadcaster.py" respawn="false" >
+       <param name="robot" type="string" value="riki2" />
+     </node>
+
+     <node name="multi_robot_follow" pkg="rikibot" type="rikibot_tf_listener.py" output="screen">
+	<param name="listen_robot" value="riki1" type="string" />
+	<param name="follow_robot" value="riki2" type="string" />
+     </node>
+</launch>
+

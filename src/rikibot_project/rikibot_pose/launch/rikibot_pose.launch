@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rikibot_pose" type="rikibot_trt_pose.py" name="rikibot_trt_pose_node" output="screen"/>
+  <node pkg="rikibot_pose" type="rikibot_trt_bridge.py" name="rikibot_trt_bridge_node" output="screen"/>
+</launch>

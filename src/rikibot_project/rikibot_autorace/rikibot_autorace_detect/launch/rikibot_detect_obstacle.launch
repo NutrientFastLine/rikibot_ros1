@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find rikibot)/launch/lidar/$(env RIKILIDAR).launch" />
+  <node pkg="rikibot_autorace_detect" type="detect_obstacle" name="detect_obstacle" output="screen">
+      <param name="detect_distance" value="0.5" type="double" />
+      <param name="debug_mode" value="False" type="Bool" />
+  </node>
+</launch>

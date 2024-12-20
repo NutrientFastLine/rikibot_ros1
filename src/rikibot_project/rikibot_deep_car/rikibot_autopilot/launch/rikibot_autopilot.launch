@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rikibot_autopilot" name="rikibot_autopilot" type="rikibot_autopilot.py" output="screen">
+      <param name='speed' value='0.2' type='double' />
+  </node>
+</launch>

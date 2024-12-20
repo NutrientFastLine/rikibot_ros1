@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find rikibot)/launch/lidar/$(env RIKILIDAR).launch" />
+  <node pkg="rikibot_autopilot" name="rikibot_lidar_autopilot" type="rikibot_lidar_autopilot.py" output="screen">
+      <param name='speed' value='0.2' type='double' />
+      <param name='distance' value='0.5' type='double' />
+  </node>
+</launch>

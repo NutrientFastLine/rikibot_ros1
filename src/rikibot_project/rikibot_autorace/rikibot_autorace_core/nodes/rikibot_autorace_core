@@ -1,0 +1,215 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+################################################################################
+# Copyright 2018 ROBOTIS CO., LTD.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
+# Author: Leon Jung, Gilbert
+
+import rospy
+import numpy as np
+from enum import Enum
+from std_msgs.msg import Int8, Float64, Bool
+import tf
+from geometry_msgs.msg import Twist, Quaternion
+from nav_msgs.msg import Odometry
+from math import radians, copysign
+from rikibot_nav.transform_utils import quat_to_angle, normalize_angle
+
+class UTurn(object):
+
+    def __init__(self):
+         self.obj_angle = radians(180)
+         self.speed = 0.3
+         self.tolerance = radians(1)
+         self.base_frame = '/base_link'
+         self.odom_frame = '/odom'
+         self.odom_angular_scale_correction = 1.0
+         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
+         self.r = rospy.Rate(20)
+
+
+    def turn_action(self):
+        rospy.loginfo("start turn around")
+        self.tf_listener = tf.TransformListener()
+        rospy.sleep(2)
+	self.tf_listener.waitForTransform(self.odom_frame, self.base_frame, rospy.Time(), rospy.Duration(60.0))
+
+	self.odom_angle = self.get_odom_angle()
+	last_angle = self.odom_angle
+	turn_angle = 0 
+	error = self.obj_angle - turn_angle
+	while abs(error) > self.tolerance :
+	    # Rotate the robot to reduce the error
+	    move_cmd = Twist()
+	    move_cmd.angular.z = copysign(self.speed, error)
+	    self.cmd_vel.publish(move_cmd)
+	    self.r.sleep()
+
+	    # Get the current rotation angle from tf                   
+	    self.odom_angle = self.get_odom_angle()
+
+	    # Compute how far we have gone since the last measurement
+	    #delta_angle = self.odom_angular_scale_correction * normalize_angle(self.odom_angle - last_angle)
+	    delta_angle = normalize_angle(self.odom_angle - last_angle)
+
+	    # Add to our total angle so far
+	    turn_angle += delta_angle
+
+	    # Compute the new error
+	    error = self.obj_angle - turn_angle
+
+	    # Store the current angle for the next comparison
+	    last_angle = self.odom_angle
+
+	# Stop the robot
+	self.cmd_vel.publish(Twist())
+
+    def get_odom_angle(self):
+        # Get the current transform between the odom and base frames
+        try:
+            (trans, rot)  = self.tf_listener.lookupTransform(self.odom_frame, self.base_frame, rospy.Time(0))
+        except (tf.Exception, tf.ConnectivityException, tf.LookupException):
+            rospy.loginfo("TF Exception")
+            return
+    
+        # Convert the rotation from a quaternion to an Euler angle
+        return quat_to_angle(Quaternion(*rot))
+
+
+class RikiAutoraceCore():
+    def __init__(self):
+
+        self.rate = rospy.get_param('~rate', 10)
+        r = rospy.Rate(self.rate)
+
+        self.obstacle_flag = False
+        self.traffic_light = False
+        self.traffic_limit = False
+        self.traffic_forbid =  False
+        self.traffic_brake = False
+        self.traffic_person = False
+        self.traffic_stop = False
+        self.time_lock = True
+        self.lock_stop = True
+
+        self.time_start = self.time_end = self.limit_start = self.limit_end = rospy.get_time()
+        self.max_vel = rospy.get_param("~max_speed", 0.2)
+        self.stop_sign_time = rospy.get_param("~stop_sign_time", 5)
+        self.lock_time = rospy.get_param("~lock_time", 8)
+        self.detect_timeout = rospy.get_param('~detect_timeout', 2)
+        rospy.loginfo("max speed:%f ", self.max_vel)
+	#self.turn = UTurn()
+        #self.sub_detect_obstacle = rospy.Subscriber('/detect/obstacle', Bool, self.cbObstacle, queue_size=1)
+
+        self.sub_traffic = rospy.Subscriber('/traffic_id', Int8, self.cbTraffic, queue_size=1)
+
+        self.pub_max_vel = rospy.Publisher('/control/max_vel', Float64, queue_size = 1)
+        self.detect_time_end = self.detect_time_start =  rospy.get_time()
+        #self.pub_turn = rospy.Publisher('/control/turn', Bool, queue_size = 1)
+        rospy.Timer(rospy.Duration(1), self.DetectTimerCallback)
+
+        while not rospy.is_shutdown():
+            self.detect_time_end =  rospy.get_time()
+            if self.detect_time_end - self.detect_time_start > self.detect_timeout:
+                self.traffic_brake = False
+                self.traffic_person = False
+            if self.obstacle_flag is True:
+                rospy.loginfo("Detect obstacle")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = 0.0 
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_light is True:
+                rospy.loginfo("Detect red light")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = 0.0
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_brake is True:
+                rospy.loginfo("Detect brake")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = 0.0
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_person is True:
+                rospy.loginfo("Detect person")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = 0.0
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_stop is True :
+                rospy.loginfo("Detect stop")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = 0.0
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_limit is True :
+                rospy.loginfo("Detect limit")
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = self.max_vel*0.5
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            elif self.traffic_forbid is True :
+                rospy.loginfo("Detect forbid")
+		#self.turn.turn_action()
+                self.traffic_forbid = False
+            else: 
+                msg_pub_max_vel = Float64()
+                msg_pub_max_vel.data = self.max_vel 
+                self.pub_max_vel.publish(msg_pub_max_vel)
+            r.sleep()
+
+
+    #def cbObstacle(self, obstacle_msg):
+    #    self.obstacle_data = obstacle_msg.data
+
+    def cbTraffic(self, traffic_msg):
+        self.detect_time_start = rospy.get_time()
+        if traffic_msg.data == 1:
+            self.traffic_brake = True
+        if traffic_msg.data == 4:
+            self.traffic_person = True
+        if traffic_msg.data == 8:
+            self.traffic_light = True
+        if traffic_msg.data == 7:
+            self.traffic_light = False
+        if traffic_msg.data == 6:
+            if self.time_lock is True and self.lock_stop is True:
+                self.traffic_stop = True
+                self.time_lock = False
+                self.lock_stop = False
+                self.time_start = rospy.get_time()
+        if traffic_msg.data == 2:
+            self.traffic_forbid = True
+        if traffic_msg.data == 5:
+            self.traffic_limit = True
+            self.limit_start = rospy.get_time()
+
+
+    def DetectTimerCallback(self, event):
+        self.limit_end = self.time_end = rospy.get_time() 
+        if self.time_end - self.time_start >  self.stop_sign_time :
+            self.traffic_stop = False
+            self.time_lock = True
+            if self.time_end - self.time_start > self.lock_time and self.lock_stop is False:
+                self.lock_stop = True
+                self.time_end = self.time_start = rospy.get_time()
+        if self.limit_end - self.limit_start > 4:
+            self.traffic_limit = False
+            self.limit_start = self.limit_end
+
+    def main(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('riki_autorace_core')
+    node = RikiAutoraceCore()
+    node.main()

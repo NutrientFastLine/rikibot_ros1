@@ -1,0 +1,10 @@
+<launch>
+  <include file="$(find rikibot)/launch/lidar/$(env RIKILIDAR).launch" />
+
+  <arg name="map_file" default="$(find rikibot)/maps/house.yaml"/>
+  <node pkg="map_server" name="map_server"  type="map_server" args="$(arg map_file)" />
+
+  <include file="$(find rikibot)/launch/amcl.launch" />
+  <include file="$(find rikibot)/param/navigation/move_base.xml" />
+  <node name="multi_mark" pkg="rikibot" type="show_mark.py" output="screen" />
+</launch>

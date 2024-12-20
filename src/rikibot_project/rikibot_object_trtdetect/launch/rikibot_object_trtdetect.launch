@@ -1,0 +1,15 @@
+<launch>
+    <!--include file="$(find jetson_camera)/launch/jetson_camera.launch" /-->
+    <arg name="astra"   default="true"  doc="Set astra(astra or usb camera) is true , set d435 is false"/>
+    <arg     if="$(arg astra)" name="input_image"        default="/camera/rgb/image_raw"/>
+    <arg unless="$(arg astra)" name="input_image"      default="/camera/color/image_raw"/>
+
+
+    <rosparam  file="$(find rikibot_object_trtdetect)/config/paths.yaml" command="load"/>
+
+    <node name="rikibot_detect_node"  pkg="rikibot_object_trtdetect" type="rikibot_object_trtdetect"  output="screen">
+          <param name="image_topic" value="$(arg input_image)" />
+          <remap from="~imin" to="/image_raw" />
+    </node>
+
+</launch>

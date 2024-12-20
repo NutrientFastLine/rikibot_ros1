@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_link" args="0 0 0   -1.5707963267948966 0 -1.570796326794896  /base_link /camera_color_optical_frame  100"/>
+  <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
+  <include file="$(find rikibot)/launch/lidar/$(env RIKILIDAR).launch" />
+</launch>

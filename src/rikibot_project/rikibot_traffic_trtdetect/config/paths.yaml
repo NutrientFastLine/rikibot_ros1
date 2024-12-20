@@ -1,0 +1,4 @@
+rikibot_detect_node:
+    model_path: "/home/rikibot/catkin_ws/src/rikibot_project/rikibot_traffic_trtdetect/config/ssd-mobilenet.onnx"
+    class_labels_path: "/home/rikibot/catkin_ws/src/rikibot_project/rikibot_traffic_trtdetect/config/labels.txt"
+

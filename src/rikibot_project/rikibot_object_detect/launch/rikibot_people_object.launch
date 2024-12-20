@@ -1,0 +1,8 @@
+<launch>
+  <arg     if="$(env USB_CAMERA)" name="input_image"        default="/camera/rgb/image_raw"/>
+  <arg unless="$(env USB_CAMERA)" name="input_image"      default="/camera/color/image_raw"/>
+
+  <node name="rikibot_people_detect" pkg="rikibot_object_detect" type="rikibot_people_detect.py" output="screen" >
+      <param name="camera_topic" value="$(arg input_image)" type="string" />
+  </node>
+</launch>

@@ -1,0 +1,8 @@
+<launch>
+  <include file="$(find rikibot_slam_3d)/launch/rikibot_astra_bringup.launch"/>
+  <include file="$(find rikibot_slam_3d)/launch/rtabmap.launch">
+    <arg name="rviz"       value="true"/>
+    <arg name="localization"    value="true" doc="Localization mode for navigation"/>
+  </include>
+  <!--include file="$(find rikibot_deep_learning)/launch/rikibot_detect.launch"/-->
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+  <node name="rikibot_speaker_node" pkg="rikibot_ai_speech" type="rikibot_speaker_node.py" output="screen"/>
+  <node name="rikibot_nav_node" pkg="rikibot_ai_speech" type="rikibot_speech_nav.py" output="screen">
+      <param name="device_id" type="int" value="11" />
+  </node>
+</launch>

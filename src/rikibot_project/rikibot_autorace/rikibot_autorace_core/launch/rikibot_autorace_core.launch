@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find rikibot_autorace_camera)/launch/rikibot_autorace_camera.launch" />
+    <include file="$(find rikibot_autorace_detect)/launch/rikibot_detect_lane.launch" />
+    <!--include file="$(find rikibot_autorace_detect)/launch/rikibot_detect_obstacle.launch" /-->
+    <node pkg="rikibot_autorace_core" type="rikibot_autorace_trtcore" name="rikibot_autorace_trtcore" output="screen" >
+        <param name="max_speed" value="0.2" type="double" />
+    </node>
+</launch>
